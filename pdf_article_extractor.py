@@ -1,6 +1,7 @@
 import streamlit as st
 import pdfplumber
 from collections import defaultdict
+import json
 
 # --- Helper Functions ---
 line_tolerance = 3
@@ -133,3 +134,12 @@ if uploaded_file:
     # Optional: Show raw data in expander
     with st.expander("Show raw extracted data"):
         st.write(articles)
+
+        # Convert to JSON string
+    json_data = json.dumps(articles, indent=2)
+
+    # Add download button
+    st.download_button(label="Download as JSON",
+                       data=json_data,
+                       file_name="articles.json",
+                       mime="application/json")
