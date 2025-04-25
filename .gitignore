@@ -1,2 +1,7 @@
 venv
 .env
+.devcontainer
+test.py
+test_logs.txt
+logs.txt
+*/__pycache__
