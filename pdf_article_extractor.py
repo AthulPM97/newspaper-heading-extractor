@@ -1,12 +1,9 @@
 import streamlit as st
 import json
-from dotenv import load_dotenv
 from mongo import client
 from datetime import datetime, timezone
 
 from utils import extract_headings
-
-load_dotenv()
 
 # --- Database ---
 db = client["headlines"]
