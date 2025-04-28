@@ -1,16 +1,18 @@
 import pdfplumber
 from collections import defaultdict
 from .validate_headings import is_valid_heading
+# import json
 
 line_tolerance = 3
 
 
 def extract_headings(pdf_path):
-    headings = {}  # Dictionary to store headings by page number
+    headings = {}  # { page_num: { "page_title": ..., "headlines": [...] } }
 
     with pdfplumber.open(pdf_path) as pdf:
         for page_num, page in enumerate(pdf.pages):  # Track page number
-            page_headings = []  # Initialize list for current page's headings
+            page_headlines = []  # List for current page's headlines
+            page_title = ""  # Placeholder for page's title
 
             word_objects = page.extract_words(extra_attrs=["fontname", "size"],
                                               keep_blank_chars=False,
@@ -18,9 +20,18 @@ def extract_headings(pdf_path):
 
             # Skip pages with no text
             if not word_objects:
-                headings[page_num] = []  # Add empty list for empty page
+                headings[page_num] = {"page_title": "", "headlines": []}
                 continue
 
+            # === Detect page title ===
+            top_words = [
+                w for w in word_objects if w['top'] < 0.05 * page.height
+            ]
+            top_words.sort(key=lambda w: w['size'], reverse=True)
+            if top_words and top_words[0] and top_words[0]["text"]:
+                page_title = top_words[0]["text"]
+
+            # === Normal headline extraction ===
             # Extract all unique heights (using a set to avoid duplicates)
             unique_font_sizes = {word["size"] for word in word_objects}
 
@@ -73,7 +84,7 @@ def extract_headings(pdf_path):
 
             # Process groups for this page
             for font_key in final_groups:
-                sentence_parts = []  # Reset for each font_key
+                sentence_parts = []
                 word_groups = final_groups[font_key]
 
                 # Combine ALL words across ALL groups for this font_key
@@ -81,13 +92,15 @@ def extract_headings(pdf_path):
                     for word in group:
                         sentence_parts.append(word["text"])
 
-                # Join all words into a single sentence per font_key
-                if sentence_parts:  # Ensure non-empty
+                if sentence_parts:
                     sentence = " ".join(sentence_parts)
                     if is_valid_heading(sentence):
-                        page_headings.append(sentence)
+                        page_headlines.append(sentence)
 
-            # Add page's headings to the dictionary
-            headings[page_num] = page_headings
+            # Save both page title and headlines
+            headings[page_num] = {
+                "page_title": page_title.strip(),
+                "headlines": page_headlines
+            }
 
     return headings
