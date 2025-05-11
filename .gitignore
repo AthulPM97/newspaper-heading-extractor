@@ -6,3 +6,5 @@ test_logs.txt
 logs.txt
 */__pycache__
 .streamlit
+output.py
+results.py

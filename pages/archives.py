@@ -58,7 +58,6 @@ docs = list(collection.find(query))
 
 if docs:
     for doc in docs:
-        print(doc)
         for page_num, page_headings in doc["articles"].items():
             if page_headings:
                 st.subheader(f"Page {int(page_num) + 1}:")
